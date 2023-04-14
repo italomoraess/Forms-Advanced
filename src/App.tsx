@@ -7,6 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 type CreateUserFormData = z.infer<typeof createUserFormSchema>;
 
 const createUserFormSchema = z.object({
+  name: z.string()
+    .nonempty('O nome é obrigatório')
+    .transform(name => {
+      return name.trim().split(' ').map(word => {
+        return word[0].toLocaleLowerCase().concat(word.substring(1))
+      }).join(' ');
+    }),
   email: z.string()
     .nonempty('O e-mail é obrigatorio')
     .email('Formato de e-mail invalido'),
@@ -32,7 +39,17 @@ function App() {
         className="flex flex-col gap-4 w-full max-w-xs"
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="">E-mail</label>
+          <label htmlFor="name">Nome</label>
+          <input 
+            type="text" 
+            {...register('name')}
+            className="border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
+          />
+          {errors.name && <span>{errors.name.message}</span>}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="email">E-mail</label>
           <input 
             type="email" 
             {...register('email')}
@@ -42,7 +59,7 @@ function App() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="">Senha</label>
+          <label htmlFor="password">Senha</label>
           <input 
             type="password" 
             {...register('password')} 
