@@ -1,5 +1,5 @@
 import './styles/globL.css';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,13 +20,25 @@ const createUserFormSchema = z.object({
   password: z.string()
     .nonempty('A senha é obrigatória')
     .min(6, 'A senha precisa de no mínimo 6 caracteres'),
+  techs: z.array(z.object({
+    title: z.string().nonempty('O título é obrigatorio'),
+    knowledge: z.coerce.number().min(1).max(10),
+  })).min(2, 'Insira pelo menos 2 tecnologias')
 })
 
 function App() {
   const [output, setOutput] = useState('');
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateUserFormData>({
+  const { register, handleSubmit, formState: { errors }, control } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserFormSchema)
   });
+  const { fields, append, remove} = useFieldArray({
+    control,
+    name: 'techs'
+  });
+
+  function addNewTech(){
+    append({title: '', knowledge: 0})
+  };
 
   function createUser(data: any) {
     setOutput(JSON.stringify(data, null, 2));
@@ -45,7 +57,7 @@ function App() {
             {...register('name')}
             className="border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
           />
-          {errors.name && <span>{errors.name.message}</span>}
+          {errors.name && <span className='text-red-500 text-sm'>{errors.name.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -55,7 +67,7 @@ function App() {
             {...register('email')}
             className="border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
           />
-          {errors.email && <span>{errors.email.message}</span>}
+          {errors.email && <span className='text-red-500 text-sm'>{errors.email.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -65,7 +77,42 @@ function App() {
             {...register('password')} 
             className="border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
           />
-          {errors.password && <span>{errors.password.message}</span>}
+          {errors.password && <span className='text-red-500 text-sm'>{errors.password.message}</span>}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="password" className='flex items-center justify-between'>
+            Tecnologias
+            <button onClick={addNewTech} className='text-emerald-500 text-sm'>Adicionar</button>
+          </label>
+          {fields.map((field, index) => {
+            return(
+              <div key={field.id} className='flex gap-2'>
+                <div className='flex flex-1 flex-col gap-1'>
+                  <input 
+                    type="text" 
+                    {...register(`techs.${index}.title`)} 
+                    className="border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
+                  />
+
+                  {errors.techs?.[index]?.title && <span className='text-red-500 text-sm'>{errors.techs?.[index]?.title?.message}</span>}
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <input 
+                    type="number" 
+                    {...register(`techs.${index}.knowledge`)}
+                    className="w-16 border border-zinc-800 bg-zinc-900 text-white shadow-sm rounded h-10 px-3"
+                  />
+
+                  {errors.techs?.[index]?.knowledge && <span className='text-red-500 text-sm'>{errors.techs?.[index]?.knowledge?.message}</span>}  
+                </div>
+              </div>
+            )
+          })}
+
+          {errors.techs && <span className='text-red-500 text-sm'>{errors.techs.message}</span>}  
+          
         </div>
         
         <button 
@@ -74,9 +121,7 @@ function App() {
         >
           Salvar
         </button>
-
       </form>
-
       <pre>{output}</pre>
     </main>
   )
